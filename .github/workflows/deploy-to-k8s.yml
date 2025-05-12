@@ -3,9 +3,6 @@ name: deploy-to-k8s
 on:
   workflow_call:
     inputs:
-      image_name:
-        required: true
-        type: string
       environment:
         required: true
         type: string
@@ -57,8 +54,8 @@ jobs:
         run: |
           docker build \
             --build-arg NPM_TOKEN=${{ secrets.NPM_TOKEN }} \
-            -t ${{ inputs.image_name }}:${{ github.sha }} .
-          docker push ${{ inputs.image_name }}:${{ github.sha }}
+            -t ${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }} .
+          docker push ${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }}
 
       - name: Checkout infrastructure repo
         uses: actions/checkout@v4
@@ -69,7 +66,7 @@ jobs:
 
       - name: Set image tag
         run: |
-          kustomize edit set image "${{ inputs.image_name }}=${{ inputs.image_name }}:${{ github.sha }}"
+          kustomize edit set image "${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }}"
         working-directory: ${{ steps.path.outputs.SERVICE_PATH }}
 
       - name: Setup kubeconfig
