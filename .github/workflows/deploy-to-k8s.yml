@@ -6,10 +6,16 @@ on:
       image_name:
         required: true
         type: string
-      service_path:
+      environment:
         required: true
         type: string
-      production_path:
+      type:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+      deployment_name:
         required: true
         type: string
     secrets:
@@ -35,6 +41,18 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Determine deployment path
+        id: path
+        run: |
+          if [[ "${{ inputs.namespace }}" == "core" ]]; then
+            echo "SERVICE_PATH=infrastructure/k8s/overlays/production/${{ inputs.namespace }}/${{ inputs.deployment_name }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ inputs.namespace }}" == "api" ]]; then
+            echo "SERVICE_PATH=infrastructure/k8s/overlays/production/${{ inputs.namespace }}/${{ inputs.deployment_name }}/${{ inputs.type }}" >> $GITHUB_OUTPUT
+          else
+            echo "Unsupported namespace: ${{ inputs.namespace }}"
+            exit 1
+          fi
+
       - name: Build and push image
         run: |
           docker build \
@@ -52,7 +70,7 @@ jobs:
       - name: Set image tag
         run: |
           kustomize edit set image "${{ inputs.image_name }}=${{ inputs.image_name }}:${{ github.sha }}"
-        working-directory: infrastructure/${{ inputs.service_path }}
+        working-directory: ${{ steps.path.outputs.SERVICE_PATH }}
 
       - name: Setup kubeconfig
         run: echo "${{ secrets.KUBECONFIG }}" > kubeconfig.yaml
@@ -61,8 +79,7 @@ jobs:
         env:
           KUBECONFIG: ${{ github.workspace }}/kubeconfig.yaml
         run: |
-          kubectl apply -k infrastructure/${{ inputs.production_path }}
+          kubectl apply -k infrastructure/k8s/overlays/${{ inputs.environment }}
 
       - name: Wait for deployment rollout
-        run: kubectl rollout status deployment/user -n core --timeout=60s
-
+        run: kubectl rollout status deployment/${{ inputs.deployment_name }} -n ${{ inputs.namespace }} --timeout=60s
