@@ -82,4 +82,6 @@ jobs:
           kubectl apply -k infrastructure/k8s/overlays/${{ inputs.environment }}
 
       - name: Wait for deployment rollout
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kubeconfig.yaml
         run: kubectl rollout status deployment/${{ inputs.deployment_name }} -n ${{ inputs.namespace }} --timeout=60s
