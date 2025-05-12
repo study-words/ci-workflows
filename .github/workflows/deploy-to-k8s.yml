@@ -54,8 +54,8 @@ jobs:
         run: |
           docker build \
             --build-arg NPM_TOKEN=${{ secrets.NPM_TOKEN }} \
-            -t ghcr.io/study-words/${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }} .
-          docker push ghcr.io/study-words/${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }}
+            -t ghcr.io/study-words/core-user:${{ github.sha }} .
+          docker push ghcr.io/study-words/core-user:${{ github.sha }}
 
       - name: Checkout infrastructure repo
         uses: actions/checkout@v4
