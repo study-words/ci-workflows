@@ -54,8 +54,8 @@ jobs:
         run: |
           docker build \
             --build-arg NPM_TOKEN=${{ secrets.NPM_TOKEN }} \
-            -t ghcr.io/study-words/core-user:${{ github.sha }} .
-          docker push ghcr.io/study-words/core-user:${{ github.sha }}
+            -t ghcr.io/study-words/${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }} .
+          docker push ghcr.io/study-words/${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }}
 
       - name: Checkout infrastructure repo
         uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
 
       - name: Set image tag
         run: |
-          kustomize edit set image "${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }}"
+          kustomize edit set image "${{ inputs.namespace }}-${{ inputs.deployment_name }}=${{ inputs.namespace }}-${{ inputs.deployment_name }}:${{ github.sha }}"
         working-directory: ${{ steps.path.outputs.SERVICE_PATH }}
 
       - name: Setup kubeconfig
